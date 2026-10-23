@@ -3,15 +3,12 @@ import criarJanela from "../ui/Janela.js";
 import { popularJanelaEmail } from "../ui/JanelaEmail.js";
 import { popularJanelaRegras } from "../ui/JanelaRegras.js";
 import { SelecaoManager } from "../../systems/SelecaoManager.js";
-import { caso01 } from "../../data/casos/caso01.js";
-import { regras } from "../../data/Regras.js";
+import { casosFase1 } from "../../data/casos/casosFase1.js";
+import { regras } from "../../data/regras.js";
 
 export class MainScene extends Phaser.Scene {
   constructor() {
     super("MainScene");
-    this.janelaRegras = null;
-    this.janelaEmail = null;
-    this.selecaoManager = new SelecaoManager(caso01);
   }
 
   preload() {
@@ -22,6 +19,11 @@ export class MainScene extends Phaser.Scene {
   }
 
   create() {
+    this.janelaRegras = null;
+    this.janelaEmail = null;
+    this.selecaoManager = new SelecaoManager();
+    this.filaCasos = [...casosFase1];
+
     const spritePc = this.add.image(320, 180, "pc");
     spritePc.setDisplaySize(560, 320);
 
@@ -63,9 +65,11 @@ export class MainScene extends Phaser.Scene {
     spriteEmail.on("pointerdown", () => {
       if (this.janelaEmail) {
         this.janelaEmail.setVisible(true);
-      } else {
+      } else if (this.filaCasos.length > 0) {
+        const caso = this.filaCasos.shift();
+        this.selecaoManager.definirCaso(caso);
         this.janelaEmail = criarJanela(this, 250, 100, 250, 180, "EMAIL");
-        popularJanelaEmail(this, this.janelaEmail, caso01, this.selecaoManager);
+        popularJanelaEmail(this, this.janelaEmail, caso, this.selecaoManager);
 
         this.janelaEmail.on("drag", () => {
           const bordasJanela = new Phaser.Geom.Rectangle(this.janelaEmail.x, this.janelaEmail.y, 250, 180);
@@ -87,14 +91,26 @@ export class MainScene extends Phaser.Scene {
             console.log("Email deletado");
             this.janelaEmail.destroy();
             this.janelaEmail = null;
+            this.selecaoManager.definirCaso(null);
+            if (this.janelaRegras) {
+              this.janelaRegras.destroy();
+              this.janelaRegras = null;
+            }
           } else if (Phaser.Geom.Intersects.RectangleToRectangle(bordasJanela, bordasEnviar)) {
             console.log("Email enviado");
             this.janelaEmail.destroy();
             this.janelaEmail = null;
+            this.selecaoManager.definirCaso(null);
+            if (this.janelaRegras) {
+              this.janelaRegras.destroy();
+              this.janelaRegras = null;
+            }
           } else {
             this.janelaEmail.setScale(1);
           }
         });
+      } else {
+        console.log("Não há mais emails na fila");
       }
     });
 

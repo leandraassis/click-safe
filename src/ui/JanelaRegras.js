@@ -1,5 +1,6 @@
 export function popularJanelaRegras(scene, janela, regras, selecaoManager) {
   const textosPorId = {};
+  const timers = [];
 
   regras.forEach((regra, index) => {
     const y = 22 + index * 18;
@@ -21,18 +22,34 @@ export function popularJanelaRegras(scene, janela, regras, selecaoManager) {
     textosPorId[regra.id] = regraText;
   });
 
-  selecaoManager.on("regra-selecionada", (id) => {
+  const aoSelecionarRegra = (id) => {
     if (textosPorId[id]) textosPorId[id].setColor("#ffff00");
-  });
+  };
 
-  selecaoManager.on("resultado", ({ acerto, regraId }) => {
+  const aoDesmarcarRegra = (id) => {
+    if (textosPorId[id]) textosPorId[id].setColor("#ffffff");
+  };
+
+  const aoReceberResultado = ({ acerto, regraId }) => {
     const textoObj = textosPorId[regraId];
     if (!textoObj) return;
 
     textoObj.setColor(acerto ? "#00ff00" : "#ff0000");
 
-    scene.time.delayedCall(600, () => {
+    const timer = scene.time.delayedCall(600, () => {
       textoObj.setColor("#ffffff");
     });
+    timers.push(timer);
+  };
+
+  selecaoManager.on("regra-selecionada", aoSelecionarRegra);
+  selecaoManager.on("regra-desmarcada", aoDesmarcarRegra);
+  selecaoManager.on("resultado", aoReceberResultado);
+
+  janela.once("destroy", () => {
+    selecaoManager.off("regra-selecionada", aoSelecionarRegra);
+    selecaoManager.off("regra-desmarcada", aoDesmarcarRegra);
+    selecaoManager.off("resultado", aoReceberResultado);
+    timers.forEach((timer) => timer.remove());
   });
 }
