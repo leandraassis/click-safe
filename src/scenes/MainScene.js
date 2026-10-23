@@ -3,6 +3,7 @@ import criarJanela from "../ui/Janela.js";
 import { popularJanelaEmail } from "../ui/JanelaEmail.js";
 import { popularJanelaRegras } from "../ui/JanelaRegras.js";
 import { SelecaoManager } from "../../systems/SelecaoManager.js";
+import { FilaCasos } from "../../systems/FilaCasos.js";
 import { casosFase1 } from "../../data/casos/casosFase1.js";
 import { regras } from "../../data/regras.js";
 
@@ -22,7 +23,8 @@ export class MainScene extends Phaser.Scene {
     this.janelaRegras = null;
     this.janelaEmail = null;
     this.selecaoManager = new SelecaoManager();
-    this.filaCasos = [...casosFase1];
+    this.filaCasos = new FilaCasos(1, casosFase1);
+    this.textoFeedback = null;
 
     const spritePc = this.add.image(320, 180, "pc");
     spritePc.setDisplaySize(560, 320);
@@ -65,55 +67,90 @@ export class MainScene extends Phaser.Scene {
     spriteEmail.on("pointerdown", () => {
       if (this.janelaEmail) {
         this.janelaEmail.setVisible(true);
-      } else if (this.filaCasos.length > 0) {
-        const caso = this.filaCasos.shift();
+      } else if (this.filaCasos.temProximo()) {
+        const caso = this.filaCasos.puxarProximo();
         this.selecaoManager.definirCaso(caso);
         this.janelaEmail = criarJanela(this, 250, 100, 250, 180, "EMAIL");
         popularJanelaEmail(this, this.janelaEmail, caso, this.selecaoManager);
 
-        this.janelaEmail.on("drag", () => {
-          const bordasJanela = new Phaser.Geom.Rectangle(this.janelaEmail.x, this.janelaEmail.y, 250, 180);
-          const bordasLixeira = this.zonaLixeira.getBounds();
-          const bordasEnviar = this.zonaEnviar.getBounds();
-
-          const pertoLixeira = Phaser.Geom.Intersects.RectangleToRectangle(bordasJanela, bordasLixeira);
-          const pertoEnviar = Phaser.Geom.Intersects.RectangleToRectangle(bordasJanela, bordasEnviar);
-
-          this.janelaEmail.setScale(pertoLixeira || pertoEnviar ? 0.6 : 1);
+        this.janelaEmail.on("drag", (pointer) => {
+          this.janelaEmail.setScale(this.detectarAlvo(pointer) ? 0.6 : 1);
         });
 
-        this.janelaEmail.on("dragend", () => {
-          const bordasJanela = this.janelaEmail.getBounds();
-          const bordasLixeira = this.zonaLixeira.getBounds();
-          const bordasEnviar = this.zonaEnviar.getBounds();
+        this.janelaEmail.on("dragend", (pointer) => {
+          const alvo = this.detectarAlvo(pointer);
 
-          if (Phaser.Geom.Intersects.RectangleToRectangle(bordasJanela, bordasLixeira)) {
-            console.log("Email deletado");
-            this.janelaEmail.destroy();
-            this.janelaEmail = null;
-            this.selecaoManager.definirCaso(null);
-            if (this.janelaRegras) {
-              this.janelaRegras.destroy();
-              this.janelaRegras = null;
-            }
-          } else if (Phaser.Geom.Intersects.RectangleToRectangle(bordasJanela, bordasEnviar)) {
-            console.log("Email enviado");
-            this.janelaEmail.destroy();
-            this.janelaEmail = null;
-            this.selecaoManager.definirCaso(null);
-            if (this.janelaRegras) {
-              this.janelaRegras.destroy();
-              this.janelaRegras = null;
-            }
-          } else {
+          if (!alvo) {
             this.janelaEmail.setScale(1);
+            return;
           }
+
+          const resultado = this.filaCasos.submeterResposta(
+            alvo,
+            this.selecaoManager.totalSinaisEncontrados()
+          );
+          this.retirarEmailDaMesa();
+          this.mostrarFeedback(resultado);
         });
       } else {
         console.log("Não há mais emails na fila");
       }
     });
 
+  }
+
+  detectarAlvo(pointer) {
+    if (this.zonaLixeira.getBounds().contains(pointer.x, pointer.y)) return "lixeira";
+    if (this.zonaEnviar.getBounds().contains(pointer.x, pointer.y)) return "enviar";
+    return null;
+  }
+
+  retirarEmailDaMesa() {
+    this.janelaEmail.destroy();
+    this.janelaEmail = null;
+    this.selecaoManager.definirCaso(null);
+
+    if (this.janelaRegras) {
+      this.janelaRegras.destroy();
+      this.janelaRegras = null;
+    }
+  }
+
+  mostrarFeedback(resultado) {
+    if (this.textoFeedback) {
+      this.tweens.killTweensOf(this.textoFeedback);
+      this.textoFeedback.destroy();
+    }
+
+    const oQueEra = resultado.ehPhishing ? "era golpe" : "era legítimo";
+    let mensagem = `${resultado.correta ? "ACERTOU" : "ERROU"}! O e-mail ${oQueEra}.`;
+    if (resultado.ehPhishing) {
+      mensagem += `\nSinais provados: ${resultado.sinaisEncontrados}/${resultado.totalSinais}`;
+    }
+
+    const texto = this.add.text(320, 24, mensagem, {
+      fontSize: "11px",
+      fontFamily: "monospace",
+      color: resultado.correta ? "#00ff00" : "#ff0000",
+      backgroundColor: "#0c0c2a",
+      padding: { x: 6, y: 4 },
+      align: "center",
+    })
+      .setOrigin(0.5, 0)
+      .setDepth(10);
+
+    this.textoFeedback = texto;
+
+    this.tweens.add({
+      targets: texto,
+      alpha: 0,
+      delay: 2000,
+      duration: 500,
+      onComplete: () => {
+        texto.destroy();
+        if (this.textoFeedback === texto) this.textoFeedback = null;
+      },
+    });
   }
 
   criarIconeRegras() {
