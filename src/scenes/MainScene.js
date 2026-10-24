@@ -91,6 +91,8 @@ export class MainScene extends Phaser.Scene {
           );
           this.retirarEmailDaMesa();
           this.mostrarFeedback(resultado);
+
+          if (!this.filaCasos.temProximo()) this.encerrarDia();
         });
       } else {
         console.log("Não há mais emails na fila");
@@ -103,6 +105,23 @@ export class MainScene extends Phaser.Scene {
     if (this.zonaLixeira.getBounds().contains(pointer.x, pointer.y)) return "lixeira";
     if (this.zonaEnviar.getBounds().contains(pointer.x, pointer.y)) return "enviar";
     return null;
+  }
+
+  encerrarDia() {
+    this.time.delayedCall(1500, () => {
+      if (this.textoFeedback) {
+        this.tweens.killTweensOf(this.textoFeedback);
+        this.textoFeedback.destroy();
+        this.textoFeedback = null;
+      }
+
+      this.scene.pause();
+
+      this.scene.launch("ResultadoScene", {
+        infos: this.filaCasos.pegarInfosFase(),
+        resultados: this.filaCasos.resultados,
+      });
+    });
   }
 
   retirarEmailDaMesa() {
