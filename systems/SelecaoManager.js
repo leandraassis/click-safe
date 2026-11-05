@@ -11,6 +11,7 @@ export class SelecaoManager extends Phaser.Events.EventEmitter {
     this.regraSelecionada = null;
     this.elementoSelecionado = null;
     this.sinaisEncontrados = new Set();
+    this.ligacoesErradas = new Set();
   }
 
   selecionarRegra(regraId) {
@@ -51,6 +52,7 @@ export class SelecaoManager extends Phaser.Events.EventEmitter {
     const chave = `${this.regraSelecionada}|${this.elementoSelecionado}`;
     const repetido = acerto && this.sinaisEncontrados.has(chave);
     if (acerto) this.sinaisEncontrados.add(chave);
+    else this.ligacoesErradas.add(chave);
 
     this.emit("resultado", {
       acerto,
@@ -65,5 +67,9 @@ export class SelecaoManager extends Phaser.Events.EventEmitter {
 
   totalSinaisEncontrados() {
     return this.sinaisEncontrados.size;
+  }
+
+  totalLigacoesErradas() {
+    return this.ligacoesErradas.size;
   }
 }

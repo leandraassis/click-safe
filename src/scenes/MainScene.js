@@ -87,7 +87,8 @@ export class MainScene extends Phaser.Scene {
 
           const resultado = this.filaCasos.submeterResposta(
             alvo,
-            this.selecaoManager.totalSinaisEncontrados()
+            this.selecaoManager.totalSinaisEncontrados(),
+            this.selecaoManager.totalLigacoesErradas()
           );
           this.retirarEmailDaMesa();
           this.mostrarFeedback(resultado);

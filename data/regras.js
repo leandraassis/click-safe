@@ -1,15 +1,22 @@
-//temp
 export const regras = [
   {
-    id: "dominio-falso",
-    texto: "Domínio do remetente com erro de digitação ou incomum",
+    id: "remetente-nao-oficial",
+    texto: "O remetente não usa o domínio oficial da organização",
   },
   {
-    id: "link-suspeito",
-    texto: "Link encurtado ou que não bate com a empresa citada",
+    id: "link-nao-oficial",
+    texto: "O link não leva ao site oficial ou esconde o endereço real",
   },
   {
-    id: "urgencia",
-    texto: "Urgência artificial pedindo ação imediata",
+    id: "pressa-ameaca",
+    texto: "Pressa ou ameaça para você agir sem pensar",
   },
+];
+
+export const dominiosOficiais = [
+  { organizacao: "Banco Essebanco", dominio: "essebanco.com.br" },
+  { organizacao: "Prefeitura de Vila Conexa", dominio: "vilaconexa.gov.br" },
+  { organizacao: "PixelPlay", dominio: "pixelplay.com" },
+  { organizacao: "TrampoLivre", dominio: "trampolivre.com.br" },
+  { organizacao: "Sonora", dominio: "sonora.com.br" },
 ];
