@@ -2,10 +2,15 @@ import Phaser from "phaser";
 import criarJanela from "../ui/Janela.js";
 import { popularJanelaEmail } from "../ui/JanelaEmail.js";
 import { popularJanelaRegras } from "../ui/JanelaRegras.js";
+import { criarJanelaLaudo } from "../ui/JanelaLaudo.js";
 import { SelecaoManager } from "../../systems/SelecaoManager.js";
 import { FilaCasos } from "../../systems/FilaCasos.js";
 import { casosFase1 } from "../../data/casos/casosFase1.js";
 import { regras, dominiosOficiais } from "../../data/regras.js";
+
+const LAUDO_X = 170;
+const LAUDO_Y = 10;
+const LAUDO_DESLOCAMENTO = 8;
 
 export class MainScene extends Phaser.Scene {
   constructor() {
@@ -24,7 +29,6 @@ export class MainScene extends Phaser.Scene {
     this.janelaEmail = null;
     this.selecaoManager = new SelecaoManager();
     this.filaCasos = new FilaCasos(1, casosFase1);
-    this.textoFeedback = null;
 
     const spritePc = this.add.image(320, 180, "pc");
     spritePc.setDisplaySize(560, 320);
@@ -85,13 +89,14 @@ export class MainScene extends Phaser.Scene {
             return;
           }
 
+          const sinais = this.selecaoManager.listarSinais();
           const resultado = this.filaCasos.submeterResposta(
             alvo,
             this.selecaoManager.totalSinaisEncontrados(),
             this.selecaoManager.totalLigacoesErradas()
           );
           this.retirarEmailDaMesa();
-          this.mostrarFeedback(resultado);
+          this.abrirLaudo(caso, resultado, sinais);
 
           if (!this.filaCasos.temProximo()) this.encerrarDia();
         });
@@ -110,12 +115,6 @@ export class MainScene extends Phaser.Scene {
 
   encerrarDia() {
     this.time.delayedCall(1500, () => {
-      if (this.textoFeedback) {
-        this.tweens.killTweensOf(this.textoFeedback);
-        this.textoFeedback.destroy();
-        this.textoFeedback = null;
-      }
-
       this.scene.pause();
 
       this.scene.launch("ResultadoScene", {
@@ -136,41 +135,16 @@ export class MainScene extends Phaser.Scene {
     }
   }
 
-  mostrarFeedback(resultado) {
-    if (this.textoFeedback) {
-      this.tweens.killTweensOf(this.textoFeedback);
-      this.textoFeedback.destroy();
-    }
-
-    const oQueEra = resultado.ehPhishing ? "era golpe" : "era legítimo";
-    let mensagem = `${resultado.correta ? "ACERTOU" : "ERROU"}! O e-mail ${oQueEra}.`;
-    if (resultado.ehPhishing) {
-      mensagem += `\nSinais provados: ${resultado.sinaisEncontrados}/${resultado.totalSinais}`;
-    }
-
-    const texto = this.add.text(320, 24, mensagem, {
-      fontSize: "11px",
-      fontFamily: "monospace",
-      color: resultado.correta ? "#00ff00" : "#ff0000",
-      backgroundColor: "#0c0c2a",
-      padding: { x: 6, y: 4 },
-      align: "center",
-    })
-      .setOrigin(0.5, 0)
-      .setDepth(10);
-
-    this.textoFeedback = texto;
-
-    this.tweens.add({
-      targets: texto,
-      alpha: 0,
-      delay: 2000,
-      duration: 500,
-      onComplete: () => {
-        texto.destroy();
-        if (this.textoFeedback === texto) this.textoFeedback = null;
-      },
-    });
+  abrirLaudo(caso, resultado, sinais) {
+    const deslocamento = (this.filaCasos.resultados.length - 1) * LAUDO_DESLOCAMENTO;
+    criarJanelaLaudo(
+      this,
+      LAUDO_X + deslocamento,
+      LAUDO_Y + deslocamento,
+      caso,
+      resultado,
+      sinais
+    );
   }
 
   criarIconeRegras() {

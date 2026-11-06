@@ -49,7 +49,7 @@ export class SelecaoManager extends Phaser.Events.EventEmitter {
         sinal.elementoId === this.elementoSelecionado
     );
 
-    const chave = `${this.regraSelecionada}|${this.elementoSelecionado}`;
+    const chave = this.montarChave(this.regraSelecionada, this.elementoSelecionado);
     const repetido = acerto && this.sinaisEncontrados.has(chave);
     if (acerto) this.sinaisEncontrados.add(chave);
     else this.ligacoesErradas.add(chave);
@@ -63,6 +63,17 @@ export class SelecaoManager extends Phaser.Events.EventEmitter {
 
     this.regraSelecionada = null;
     this.elementoSelecionado = null;
+  }
+
+  montarChave(regraId, elementoId) {
+    return `${regraId}|${elementoId}`;
+  }
+
+  listarSinais() {
+    return this.caso.sinaisPresentes.map((sinal) => ({
+      ...sinal,
+      provado: this.sinaisEncontrados.has(this.montarChave(sinal.regraId, sinal.elementoId)),
+    }));
   }
 
   totalSinaisEncontrados() {

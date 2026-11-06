@@ -1,4 +1,4 @@
-export default function criarJanela(scene, x, y, largura, altura, titulo) {
+export default function criarJanela(scene, x, y, largura, altura, titulo, fechavel = false) {
   const janela = scene.add.container(x, y);
 
   const fundo = scene.add.rectangle(0, 0, largura, altura, 0x3a3d67, 0.95)
@@ -34,6 +34,10 @@ export default function criarJanela(scene, x, y, largura, altura, titulo) {
   }); 
 
   botaoMinimizar.on("pointerdown", () => {
+    if (fechavel) {
+      janela.destroy();
+      return;
+    }
     janela.setVisible(!janela.visible);
   });
 
