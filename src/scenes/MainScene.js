@@ -5,7 +5,7 @@ import { popularJanelaRegras } from "../ui/JanelaRegras.js";
 import { SelecaoManager } from "../../systems/SelecaoManager.js";
 import { FilaCasos } from "../../systems/FilaCasos.js";
 import { casosFase1 } from "../../data/casos/casosFase1.js";
-import { regras } from "../../data/regras.js";
+import { regras, dominiosOficiais } from "../../data/regras.js";
 
 export class MainScene extends Phaser.Scene {
   constructor() {
@@ -187,8 +187,8 @@ export class MainScene extends Phaser.Scene {
       if (this.janelaRegras) {
         this.janelaRegras.setVisible(true);
       } else {
-        this.janelaRegras = criarJanela(this, 200, 60, 200, 150, "REGRAS");
-        popularJanelaRegras(this, this.janelaRegras, regras, this.selecaoManager);
+        this.janelaRegras = criarJanela(this, 200, 60, 200, 190, "REGRAS");
+        popularJanelaRegras(this, this.janelaRegras, regras, dominiosOficiais, this.selecaoManager);
       }
     });
   }

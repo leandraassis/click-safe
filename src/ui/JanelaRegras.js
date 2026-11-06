@@ -1,16 +1,18 @@
-export function popularJanelaRegras(scene, janela, regras, selecaoManager) {
+export function popularJanelaRegras(scene, janela, regras, dominios, selecaoManager) {
   const textosPorId = {};
   const timers = [];
 
-  regras.forEach((regra, index) => {
-    const y = 22 + index * 18;
+  let y = 22;
 
+  regras.forEach((regra) => {
     const regraText = scene.add.text(6, y, regra.texto, {
       fontSize: "9px",
       fontFamily: "monospace",
       color: "#ffffff",
       wordWrap: { width: 190 },
     }).setInteractive();
+
+    y += regraText.height + 3;
 
     regraText.setData("regraId", regra.id);
 
@@ -20,6 +22,26 @@ export function popularJanelaRegras(scene, janela, regras, selecaoManager) {
 
     janela.add(regraText);
     textosPorId[regra.id] = regraText;
+  });
+
+  const tituloAnexo = scene.add.text(6, y + 6, "Anexo: domínios oficiais", {
+    fontSize: "9px",
+    fontFamily: "monospace",
+    color: "#ffcc66",
+  });
+  janela.add(tituloAnexo);
+  y = tituloAnexo.y + tituloAnexo.height + 3;
+
+  dominios.forEach(({ organizacao, dominio }) => {
+    const dominioText = scene.add.text(6, y, `${organizacao}: ${dominio}`, {
+      fontSize: "9px",
+      fontFamily: "monospace",
+      color: "#cccccc",
+      wordWrap: { width: 190 },
+    });
+
+    y += dominioText.height + 2;
+    janela.add(dominioText);
   });
 
   const aoSelecionarRegra = (id) => {
